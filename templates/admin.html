@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}Admin home{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1>
+        * * * * * * * * * * * * * ADMIN MODE * * * * * * * * * * * * * *
+    </h1>
+    
+    <h1><a href="{{ url_for('select') }}">View</a>
+    <a href="{{ url_for('insert') }}">Insert</a>
+    <a href="{{ url_for('update') }}">Update</a>
+    <a href="{{ url_for('delete') }}">Delete</a>
+    </h1>
+
+
+</div>
+
+<body>
+    <h3>
+        <a href="{{ url_for('reset') }}">ERASE ALL DATA</a>
+    </h3>
+</body>
+
+
+{% endblock %}

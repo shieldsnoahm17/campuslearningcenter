@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}Page 1{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h2>
+        Welcome! There are 20 different example queries you can make
+        in order to run that query, type in the command to run the appropriate
+        procedure and click 'submit'
+        The syntax for each query is next to the query description<br>
+        Click 
+        <a href="{{ url_for('reset') }}">HERE</a>
+        to restart the database and bring it back to it's original state
+    </h2>
+    <h4>
+        <br>1. Procedures that Denver Stoole can have done with his current physicians. (SELECT * FROM stoole_prodcedures)
+        <br>2. Amount made from procedures in the first half of 2023. (SELECT * FROM money_made_first_half)
+        <br>3. The most expensive medication prescribed to patient #5. (SELECT * FROM exp_med)
+        <br>4. Number of patients over the age of 50 that are taking Levopion Acarpen. (SELECT * FROM 50yo_LevAc)
+        <br>5. When was Kioriva Benazevelam prescribed to patient name Dexter Lawrence. (SELECT * FROM benazevelam_lawrence)
+        <br>6. Description and instructions of what was prescribed to Bobby Carter on appointment 12. (SELECT * FROM carter_12)
+        <br>7. All doctors working from February 2023 to the end of the year. (SELECT * FROM feb2023_physicians)
+        <br>8. Phone number of oldest patient seen by Dr. Julia Price. (SELECT * FROM julia_oldest_num)
+        <br>9. Name of everyone that has been prescribed an inhaler.(SELECT * FROM inhaler_prescribed)
+        <br>10. All the doctors that can perform surgeries. (SELECT * FROM surgeons)
+        <br>11. All doctors that make over $100,000 annually. (SELECT * FROM 6figs)
+        <br>12. Total cost to have doctors for the year 2023. (SELECT * FROM 2023_payroll)
+        <br>13. When did appointment #15 take place. (SELECT * FROM 15_time)
+        <br>14. List of all the physicians that Grant Rights had. (SELECT * FROM rights_physicians)
+        <br>15. How many appointments did Asa Hirsch have in July 2023 (SELECT * FROM hirsch_july_appts)
+        <br>16. List all of the procedures Dr. Noah Shields is authorized to do. (SELECT * FROM shields_prods)
+        <br>17. List all the medication names under $50 and description of each. (SELECT * FROM med_under_50)
+        <br>18. Youngest age the of patient taking Lysodein. (SELECT * FROM end_lysodein)
+        <br>19. Average cost of procedures from 2022. (SELECT * FROM avg_2022)
+        <br>20. Busiest day on August 2023 (SELECT * FROM busiest_0823)
+    
+    </h4>
+    
+    <h2>
+        {{ result }}
+    </h2>
+    
+</div>
+{{ wtf.quick_form(form) }}
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}Insert{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+
+
+    <h1>
+        * * * * * * * * SELECT WHAT YOU WOULD LIKE TO ADD * * * * * * * * *
+    </h1>
+
+    <h1>
+        <a href="{{ url_for('selections') }}">Back</a>
+    </h1>
+    
+    <h1>
+        <a href="{{ url_for('insert_tutor') }}">Tutor</a>
+        <a href="{{ url_for('insert_course') }}">Course</a>
+        <a href="{{ url_for('insert_expertise') }}">Expertise</a>
+        <a href="{{ url_for('insert_availability') }}">Availability</a>
+        <a href="{{ url_for('insert_sessionName') }}">Session</a>
+        <a href="{{ url_for('insert_user') }}">User</a>
+    
+    </h1>
+    
+</div>
+{% endblock %}
+

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}Course override{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h0>
+        *************View Course*************
+    </h0>
+
+    <h1>
+        <a href="{{ url_for('select') }}">Back</a>
+    </h1>
+</div>
+
+<body>
+    <table class = "table">
+        <tr class = "table__header">
+            {% for header in headers %}
+            <th>{{ header }}</th>
+            {% endfor %}
+        </tr>
+        {% for row in data %}
+        <tr class = "table__row">
+            {% for cell in row %}
+               <td class = "table__cell">{{ cell }}</td> 
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+
+{% endblock %}
