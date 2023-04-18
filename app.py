@@ -24,13 +24,13 @@ conn = connection(host = 'cmsc508.com', database = '22FA_team32', user = 'shield
 tutors = {}
 
 #set of course codes
-courses = set({})
+all_courses = set({})
 
 class Tutor:
-    def __init__(self, name=None, courses=set({}), availabilities=set({})):
+    def __init__(self, name=None, courses=None, availabilities=None):
         self.name = name
-        self.courses = courses
-        self.availabilities = availabilities
+        self.courses = set(courses) if courses else set()
+        self.availabilities = set(availabilities) if availabilities else set()
 
         def set_name(self, name):
             self.name = name
@@ -108,9 +108,13 @@ class ExpertiseForm(FlaskForm):
     course_codes = SelectMultipleField('course code', choices = [], validators=[DataRequired()])
     submit = SubmitField('Submit')
 
+class SelectExpertiseForm(FlaskForm):
+    name = SelectField('Name', choices = [], validators=[DataRequired()])
+    course_code = SelectField('Course Code', choices = [], validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
 class AvailabilityForm(FlaskForm):
     name = SelectField('Name', choices = [], validators=[DataRequired()])
-    course_codes = SelectMultipleField('course code', choices = [], validators=[DataRequired()])
     days = SelectMultipleField('Days', choices = [], validators=[DataRequired()])
     times = SelectMultipleField('Times', choices = [], validators=[DataRequired()])
     submit = SubmitField('Submit')
@@ -296,7 +300,7 @@ def insert_course():
 
     if form.validate_on_submit():
         course_code = form.course_code.data
-        courses.add(course_code)
+        all_courses.add(course_code)
 
     return render_template('insert_tutor.html', form = form)
 
@@ -311,14 +315,17 @@ def insert_expertise():
     form = ExpertiseForm()
 
     names = [(tutor[0], tutor[1].name) for tutor in tutors.items()]
-    all_course_codes = [(code,code) for code in courses]
+    all_course_codes = [(code,code) for code in all_courses]
     
     form.course_codes.choices = all_course_codes
     form.name.choices = names
 
+
     if form.validate_on_submit():
         course_codes = form.course_codes.data
+        print(course_codes)
         vnumber = form.name.data
+        print(vnumber)
         for course in course_codes:
             tutors[vnumber].courses.add(course)
     
@@ -328,22 +335,18 @@ def insert_expertise():
 @login_required
 def insert_availability():
     vnumber = None
-    course_codes = None
     times = None
     days = None
     form = AvailabilityForm()
 
     names = [(tutor[0], tutor[1].name) for tutor in tutors.items()]
-    all_course_codes = [(code,code) for code in courses]
 
     form.name.choices = names
-    form.course_codes.choices = all_course_codes
     form.days.choices = [('sunday', 'sunday'), ('monday', 'monday'), ('tuesday', 'tuesday'), ('wednesday', 'wednesday'), ('thursday', 'thursday'), ('friday', 'friday'), ('saturday', 'saturday')]
     form.times.choices = [('100', '100'), ('200', '200'), ('300', '300'), ('400', '400'), ('500', '500'), ('600', '600'), ('700', '700')]
 
     if form.validate_on_submit():
         vnumber = form.name.data
-        course_codes = form.course_codes.choices
         days = form.days.data
         times = form.times.data
         for day in days:
@@ -363,10 +366,10 @@ def insert_oldData():
         oldData = form.oldData.data
     
     global tutors
-    global courses
+    global all_courses
 
     tutors = {}
-    courses = set({})
+    all_courses = set({})
 
     while(len(oldData) > 0):
         vnumber = oldData[:oldData.index(';')]
@@ -377,17 +380,18 @@ def insert_oldData():
         oldData = oldData[ oldData.index(';') + 1:]
         print(name)
 
-        courses = ast.literal_eval(oldData[:oldData.index(';')])
+        courseIDs = ast.literal_eval(oldData[:oldData.index(';')])
+        all_courses = all_courses | courseIDs
         oldData = oldData[ oldData.index(';') + 1:]
-        print(courses)
+        print(courseIDs)
 
         availabilities = ast.literal_eval(oldData[:oldData.index(';')])
         oldData = oldData[ oldData.index(';') + 1:]
         print(availabilities)
 
-        tutors[vnumber] = Tutor(name, courses, availabilities)
+        tutors[vnumber] = Tutor(name, courseIDs, availabilities)
 
-    print(tutors)
+    print(all_courses)
 
 
 
@@ -452,46 +456,69 @@ def select():
 @login_required
 def select_tutor():
     headers = ('Name','V-Number')
-    ######data = conn.select({"table":"tutor","data":{}, "columns":["tutor_name", "tutor_vnumber"]})
-    return render_template('select_table.html', headers = headers, data = data)
+    names = [(tutor[1].name, tutor[0]) for tutor in tutors.items()]
+    return render_template('select_table.html', headers = headers, data = names)
 
 
 @app.route('/select_course', methods=['GET', 'POST'])
 @login_required
 def select_course():
     headers = ('Course ID',)
+    data = [(course,) for course in all_courses]
     ########data = conn.select({"table":"course","data":{}, "columns":["*"]})
     return render_template('select_table.html', headers = headers, data = data)
 
 @app.route('/select_expertise', methods=['GET', 'POST'])
 @login_required
 def select_expertise():
-    name = None
+    vnumber = None
     names = None
-    course_codes = None
+    course_code = None
     all_course_codes = None
     headers = ("Name", "Course ID")
-    form = ExpertiseForm()
+    form = SelectExpertiseForm()
+    data = []
 
-    #######names = conn.select({"table":"tutor","data":{},"columns":["tutor_vnumber, tutor_name"]})
-    ########all_course_codes = conn.select({"table":"course","data":{},"columns":["course_code"]})
-    all_course_codes = [(code[0],code[0]) for code in all_course_codes]
+
+    #########names = conn.select({"table":"tutor","data":{},"columns":["tutor_vnumber, tutor_name"]})
+    #########all_course_codes = conn.select({"table":"course","data":{},"columns":["course_code"]})
+    names = [(tutor[0], tutor[1].name) for tutor in tutors.items()]
+    all_course_codes = [(course, course) for course in all_courses]
     
-    form.course_codes.choices = all_course_codes
+    form.course_code.choices = all_course_codes
     form.name.choices = names
-    form.course_codes.choices.insert(0,('*','any'))
+    form.course_code.choices.insert(0,('*','any'))
     form.name.choices.insert(0,('*','any'))
 
     if form.validate_on_submit():
-        course_code = form.course_codes.data[0]
-        name = form.name.data
+        course_code = form.course_code.data
+        vnumber = form.name.data
 
-        conditions = {}
-        if course_code != '*':
-            conditions['expertise_code'] = course_code
-        if name != '*':
-            conditions["expertise_vnumber"] = name
-        #########data = conn.select({"table":"expertise","data":conditions, "columns":["*"]})
+    
+
+        #if they want all expertises of all tutors
+        if course_code == "*" and vnumber == "*":
+            for tutor in tutors.values():
+                for course in tutor.courses:
+                    data.append((tutor.name, course))
+
+        #if they want to see if a specific person tutors a secific class
+        elif course_code != "*" and vnumber != "*":
+            if course_code in tutors[vnumber].courses:
+                data.append((tutors[vnumber].name, course_code))
+
+        #if they want to see all courses a specific tutor tutors
+        elif course_code == "*" :
+            for course in tutors[vnumber].courses:
+                data.append((tutors[vnumber].name, course))
+
+        #if they want to see all tutors that tutor a specific course
+        elif vnumber == "*":
+            for tutor in tutors.values():
+                print("if", course_code, " in ", tutor.courses)
+                if course_code in tutor.courses:
+                    data.append((tutor.name, course_code))
+
         return render_template('select_table.html', headers = headers, data = data)
             
     
