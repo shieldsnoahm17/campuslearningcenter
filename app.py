@@ -8,7 +8,8 @@ from db import connection
 import json
 from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user
 import ast
-
+import docx
+import datetime
 
 app = Flask(__name__)
 
@@ -18,13 +19,16 @@ login_manager.init_app(app)
 app.config['SECRET_KEY'] = 'super_secret'
 bootstrap = Bootstrap(app)
 moment = Moment(app)
-conn = connection(host = 'cmsc508.com', database = '22FA_team32', user = 'shieldsn', password = 'V01000930')
+#conn = connection(host = 'cmsc508.com', database = '22FA_team32', user = 'shieldsn', password = 'V01000930c')
 
 #dictionary of tutors
 tutors = {}
 
+#dictionary to be used only for the word and excel sheets
+parsedData = {}
+
 #set of course codes
-all_courses = set({})
+all_courses = {}
 
 class Tutor:
     def __init__(self, name=None, courses=None, availabilities=None):
@@ -300,7 +304,13 @@ def insert_course():
 
     if form.validate_on_submit():
         course_code = form.course_code.data
-        all_courses.add(course_code)
+        courseSubject = course_code[:4]
+        courseNumber = course_code[4:]
+        if courseSubject not in all_courses:
+            all_courses[courseSubject] = {}
+
+        if courseNumber not in all_courses[courseSubject]:
+            all_courses[courseSubject][courseNumber] = set({})
 
     return render_template('insert_tutor.html', form = form)
 
@@ -312,10 +322,15 @@ def insert_expertise():
     names = None
     course_codes = None
     all_course_codes = None
+    tempCodes = set({})
     form = ExpertiseForm()
 
+    for subject in all_courses.keys():
+        for number in all_courses[subject]:
+            tempCodes.add(f"{subject}{number}")
+
     names = [(tutor[0], tutor[1].name) for tutor in tutors.items()]
-    all_course_codes = [(code,code) for code in all_courses]
+    all_course_codes = [(code,code) for code in tempCodes]
     
     form.course_codes.choices = all_course_codes
     form.name.choices = names
@@ -323,9 +338,7 @@ def insert_expertise():
 
     if form.validate_on_submit():
         course_codes = form.course_codes.data
-        print(course_codes)
         vnumber = form.name.data
-        print(vnumber)
         for course in course_codes:
             tutors[vnumber].courses.add(course)
     
@@ -342,8 +355,9 @@ def insert_availability():
     names = [(tutor[0], tutor[1].name) for tutor in tutors.items()]
 
     form.name.choices = names
-    form.days.choices = [('sunday', 'sunday'), ('monday', 'monday'), ('tuesday', 'tuesday'), ('wednesday', 'wednesday'), ('thursday', 'thursday'), ('friday', 'friday'), ('saturday', 'saturday')]
-    form.times.choices = [('100', '100'), ('200', '200'), ('300', '300'), ('400', '400'), ('500', '500'), ('600', '600'), ('700', '700')]
+    form.days.choices = [('sunday', 'Sunday'), ('monday', 'Monday'), ('tuesday', 'Tuesday'), ('wednesday', 'Wednesday'), ('thursday', 'Thursday'), ('friday', 'Friday'), ('saturday', 'Saturday')]
+    form.times.choices = [('9', '9:00 - 10:00 AM'), ('10', '10:00 - 11:00 AM'), ('11', '11:00 - 12:00 PM'), ('12', '12:00 - 1:00 PM'), ('13', '1:00 - 2:00 PM'), ('14', '2:00 - 3:00 PM'), ('15', '3:00 - 4:00 PM'), ('16', '4:00 - 5:00 PM'), ('17', '5:00 - 6:00 PM'), ('18', '6:00 - 7:00 PM'), ('19', '7:00 - 8:00 PM'), ('20', '8:00 - 9:00 PM'), ('21', '9:00 - 10:00 PM')]
+
 
     if form.validate_on_submit():
         vnumber = form.name.data
@@ -369,27 +383,34 @@ def insert_oldData():
     global all_courses
 
     tutors = {}
-    all_courses = set({})
+    all_courses = {}
 
     while(len(oldData) > 0):
         vnumber = oldData[:oldData.index(';')]
         oldData = oldData[ oldData.index(';') + 1:]
-        print(vnumber)
         
         name = oldData[:oldData.index(';')]
         oldData = oldData[ oldData.index(';') + 1:]
-        print(name)
 
         courseIDs = ast.literal_eval(oldData[:oldData.index(';')])
-        all_courses = all_courses | courseIDs
         oldData = oldData[ oldData.index(';') + 1:]
-        print(courseIDs)
 
         availabilities = ast.literal_eval(oldData[:oldData.index(';')])
         oldData = oldData[ oldData.index(';') + 1:]
-        print(availabilities)
 
         tutors[vnumber] = Tutor(name, courseIDs, availabilities)
+
+        for course in courseIDs:
+            subject = course[:4]
+            number = course[4:]
+
+            if subject not in all_courses:
+                all_courses[subject] = {}
+            if number not in all_courses[subject]:
+                all_courses[subject][number] = availabilities
+            else:
+                all_courses[subject][number] = all_courses[subject][number] | availabilities
+
 
     print(all_courses)
 
@@ -537,8 +558,8 @@ def select_availability():
     ##########names = conn.select({"table":"tutor","data":{},"columns":["tutor_vnumber, tutor_name"]})
 
     form.name.choices = names
-    form.days.choices = [('sunday', 'sunday'), ('monday', 'monday'), ('tuesday', 'tuesday'), ('wednesday', 'wednesday'), ('thursday', 'thursday'), ('friday', 'friday'), ('saturday', 'saturday')]
-    form.times.choices = [('100', '100'), ('200', '200'), ('300', '300'), ('400', '400'), ('500', '500'), ('600', '600'), ('700', '700')]
+    form.days.choices = [('sunday', 'Sunday'), ('monday', 'Monday'), ('tuesday', 'Tuesday'), ('wednesday', 'Wednesday'), ('thursday', 'Thursday'), ('friday', 'Friday'), ('saturday', 'Saturday')]
+    form.times.choices = [('9', '9:00 - 10:00 AM'), ('10', '10:00 - 11:00 AM'), ('11', '11:00 - 12:00 AM'), ('12', '12:00 - 1:00 PM'), ('13', '1:00 - 2:00 PM'), ('14', '2:00 - 3:00 PM'), ('15', '3:00 - 4:00 PM'), ('16', '4:00 - 5:00 PM'), ('17', '5:00 - 6:00 PM'), ('18', '6:00 - 7:00 PM'), ('19', '7:00 - 8:00 PM'), ('20', '8:00 - 9:00 PM'), ('21', '9:00 - 10:00 PM')]
     form.name.choices.insert(0,('*','any'))
     form.days.choices.insert(0,('*','any'))
     form.times.choices.insert(0,('*','any'))
@@ -619,6 +640,7 @@ def select_session():
 # |--------------------------------------------------------------------------------------------|
 
 @app.route('/reset')
+@login_required
 def reset():
     conn.reset()
     return redirect('/selections')
@@ -631,13 +653,163 @@ def getUsers():
 
 
 @app.route('/createTable')
+@login_required
 def createTable():
     oldData = ""
-    print(tutors)
     for tutor in tutors.items():
         oldData += f"{tutor[0]};{tutor[1].name};{tutor[1].courses};{tutor[1].availabilities};"
         # print(f"Vnumber: {tutor[0]}\n\tName: {tutor[1].name}\n\tCourses: {tutor[1].courses}\n\tAvailability: {tutor[1].availabilities}")
     print(oldData)
+    print("\n\n")
+    updateParsedData()
+    downloadDoc()
     return redirect('/selections')
 
+def updateParsedData():
+    global parsedData
+    parsedData = {}
+
+    for tutor in tutors.values():
+
+        for course in tutor.courses:
+            courseSubject = course[:4]
+            courseNumber = course[4:]
+
+            if courseSubject not in parsedData:
+                parsedData[courseSubject] = {}
+            
+            if courseNumber not in parsedData[courseSubject]:
+                parsedData[courseSubject][courseNumber] = []
+
+            parsedData[courseSubject][courseNumber].append((tutor.name, tutor.availabilities))
+
+    print(parsedData)
+
+@app.route('/downloadDoc')
+def downloadDoc():
+
+    document = docx.Document()
     
+    for subject in all_courses:
+        # Add a header with the subject name
+        document.add_heading(subject, level=1)
+
+        course_sets = []
+        #create table header as 'subject'
+        for number in all_courses[subject]:
+            course_sets.append({'course_id':number, 'time':combineDays(all_courses[subject][number])})
+
+
+        # Add a table with headers
+        table = document.add_table(rows=1, cols=2)
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = 'Course Number'
+        hdr_cells[1].text = 'Days and Times Offered'
+
+        # Set the table style to "Table Grid" to add lines
+        table.style = 'Table Grid'
+
+        # Add rows to the table for each course set
+        for course_set in course_sets:
+            row_cells = table.add_row().cells
+            row_cells[0].text = course_set['course_id']
+            row_cells[1].text = course_set['time']
+    
+    # Save the document
+    document.save('course_schedule.docx')
+
+
+
+
+
+
+    return "done"
+
+def combineDays(timesSet):
+    timesDict = {}
+    result = ""
+    for time in timesSet:
+        day = time[0]
+        hour = time[1]
+
+        if day not in timesDict:
+            timesDict[day] = {hour}
+        else:
+            timesDict[day].add(hour)
+        
+    for day in timesDict:
+        result += f"{day}: {combineTimes(timesDict[day])}\n"
+
+    return result
+
+            
+
+def combineTimes(times):
+    print("\n")
+    print(times)
+    tempTimes = set({})   #all times represent the start time, so we also need to add the end times ... (1,2) should be (1,2,3)
+    for time in times:    #we use the tempTimes because we cannot chnage the size of the set while interating through it
+        time = int(time)
+        tempTimes.add(time)
+        tempTimes.add(time + 1)
+
+    times = list(sorted(tempTimes)) # sort the list of numbers in ascending order
+    ranges = []  # create an empty list to store the condensed ranges
+    start = end = times[0]  # initialize the start and end of the first range
+    for time in times[1:]:
+        if time == end + 1:  # if the current number is part of the current range
+            end = time  # update the end of the current range
+        else:  # if the current number is not part of the current range
+            start_time = convertToRegTime(start)
+            end_time = convertToRegTime(end)
+            ranges.append((start_time, end_time))  # add the current range to the list of ranges
+            start = end = time  # start a new range with the current number
+    start_time = convertToRegTime(start) # add the last range to the list of ranges
+    end_time = convertToRegTime(end)
+    ranges.append((start_time, end_time)) 
+    return ', '.join(f'{r[0]}-{r[1]}' if r[0] != r[1] else str(r[0]) for r in ranges)
+
+#converts single digit miliraty time to regular 12 hour time
+def convertToRegTime(military_time):
+    dt_obj = datetime.datetime.strptime(str(military_time), "%H")
+    regular_time = dt_obj.strftime("%I:%M %p").lstrip('0')
+    return regular_time
+
+
+
+    # {'CMSC': {
+    #     '302': {
+    #         ('tuesday', '400'), 
+    #         ('friday', '100'), 
+    #         ('sunday', '400'), 
+    #         ('sunday', '300'), 
+    #         ('friday', '700'), 
+    #         ('thursday', '700'), 
+    #         ('tuesday', '300'), 
+    #         ('friday', '600'), 
+    #         ('thursday', '100'), 
+    #         ('monday', '200'), 
+    #         ('monday', '400'), 
+    #         ('thursday', '600'), 
+    #         ('saturday', '100'), 
+    #         ('sunday', '200'), 
+    #         ('saturday', '700'), 
+    #         ('monday', '300'), 
+    #         ('tuesday', '200'), 
+    #         ('saturday', '600')
+    #         }
+    #     }, 
+    #     'BIOL': {
+    #         '100':{
+    #             ('friday', '100'), 
+    #             ('friday', '700'), 
+    #             ('thursday', '700'),
+    #             ('friday', '600'), 
+    #             ('thursday', '100'),
+    #             ('saturday', '100'),
+    #             ('thursday', '600'),
+    #             ('saturday', '700'),
+    #             ('saturday', '600')
+    #             }
+    #         }
+    # }
