@@ -1,31 +1,23 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
-{% block title %}select{% endblock %}
+{% block title %}delete{% endblock %}
 
 {% block page_content %}
 <div class="page-header">
-
-
     <h1>
-        * * * * * * * SELECT WHAT YOU WOULD LIKE TO VIEW * * * * * * * * *
+        SELECT WHAT YOU WOULD LIKE TO ADD
     </h1>
+
+    <div class="d-flex justify-content-center">
+        <div class="btn-group" role="group" aria-label="Add options">
+            <a href="{{ url_for('select_by_tutor') }}" class="btn btn-primary btn-lg">Tutor</a>
+            <a href="{{ url_for('select_by_course') }}" class="btn btn-primary btn-lg">Course</a>
+        </div>
+    </div>
 
     <h1>
         <a href="{{ url_for('selections') }}">Back</a>
     </h1>
-    
-    <h1>
-        <a href="{{ url_for('select_tutor') }}">Tutor</a>
-        <a href="{{ url_for('select_course') }}">Course</a>
-        <a href="{{ url_for('select_expertise') }}">Expertise</a>
-        <a href="{{ url_for('select_availability') }}">Availability</a>
-        <!-- <a href="{{ url_for('select_session') }}">Session</a>     -->
-    </h1>
-    
 </div>
-
-
-
 {% endblock %}
-

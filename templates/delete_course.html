@@ -5,15 +5,13 @@
 
 {% block page_content %}
 <div class="page-header">
-    <h0>
-        *************Add New Session*************
-    </h0>
-    
-    <h1>
-        <a href="{{ url_for('insert_sessionName') }}">Back</a>
-    </h1>
+    <h2>
+        Add New Course
+    </h2>
 
 </div>
 {{ wtf.quick_form(form) }}
-
+<h1>
+    <a href="{{ url_for('delete') }}">Back</a>
+</h1>
 {% endblock %}

@@ -1,31 +1,24 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
-{% block title %}Delete{% endblock %}
+{% block title %}delete{% endblock %}
 
 {% block page_content %}
 <div class="page-header">
     <h1>
-        Enter desired data to be deleted in the following format:
+        SELECT WHAT YOU WOULD LIKE TO ADD
     </h1>
 
-    <h3>
-        table - tableName - appointments<br>
-        data - {"key":"value","key2":"value2"} - {"AID":2,"PID":16} <br>
-    </h3>
-    <h4>
-        schemas:<br>
-        Patients(PID,patientName,patientAddress,phoneNumber,insuranceID,age)<br>
-        physicians(EID,employeeName,salary)<br>
-        appointments(AID,PID,EID,apptDate,apptTime)<br>
-        medications(MID,medName,medDescription,medCost,instructions)<br>
-        procedures(proID,proType,proCost,proDescription)<br>
-        prescribes(EID,MID,PID,AID)<br>
-        undergoes_In(AID,proID)<br>
-        can_operate(prosedureID,EID)<br>
-        treated_by(PID,EID)<br>
-    </h4>
-    
+    <div class="d-flex justify-content-center">
+        <div class="btn-group" role="group" aria-label="Add options">
+            <a href="{{ url_for('delete_tutor') }}" class="btn btn-primary btn-lg">Tutor</a>
+            <a href="{{ url_for('delete_course') }}" class="btn btn-primary btn-lg">Course</a>
+            <a href="{{ url_for('delete_user') }}" class="btn btn-primary btn-lg">User</a>
+        </div>
+    </div>
+
+    <h1>
+        <a href="{{ url_for('selections') }}">Back</a>
+    </h1>
 </div>
-{{ wtf.quick_form(form) }}
 {% endblock %}

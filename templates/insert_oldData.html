@@ -5,14 +5,13 @@
 
 {% block page_content %}
 <div class="page-header">
-    <h0>
-        *************Add Existing Data*************
-    </h0>
-    
-    <h1>
-        <a href="{{ url_for('insert') }}">Back</a>
-    </h1>
+    <h2>
+        Add Old Data
+    </h2>
+
 </div>
 {{ wtf.quick_form(form) }}
-
+<h1>
+    <a href="{{ url_for('insert') }}">Back</a>
+</h1>
 {% endblock %}

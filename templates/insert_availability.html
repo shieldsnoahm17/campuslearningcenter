@@ -1,23 +1,17 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
-{% block title %}Insert Availability{% endblock %}
+{% block title %}Course override{% endblock %}
 
 {% block page_content %}
 <div class="page-header">
-    <h0>
-        *************Add New Availability*************
-    </h0>
-
-    <h1>
-        <a href="{{ url_for('insert') }}">Back</a>
-    </h1>
+    <h2>
+        Add New Availability
+    </h2>
 
 </div>
 {{ wtf.quick_form(form) }}
-
+<h1>
+    <a href="{{ url_for('insert') }}">Back</a>
+</h1>
 {% endblock %}
-
-
-
-

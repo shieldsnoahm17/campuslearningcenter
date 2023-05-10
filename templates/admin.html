@@ -1,29 +1,72 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
-{% block title %}Admin home{% endblock %}
+{% block title %}Admin Home{% endblock %}
 
 {% block page_content %}
-<div class="page-header">
-    <h1>
-        * * * * * * * * * * * * * ADMIN MODE * * * * * * * * * * * * * *
-    </h1>
-    
-    <h1><a href="{{ url_for('select') }}">View</a>
-    <a href="{{ url_for('insert') }}">Insert</a>
-    <a href="{{ url_for('update') }}">Update</a>
-    <a href="{{ url_for('delete') }}">Delete</a>
-    </h1>
-
-
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="text-left">Selections</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row justify-content-center">
+                        <div class="col-md-12">
+                            <div class="row">
+                                <div class="col-sm-12 mb-3">
+                                    <a href="{{ url_for('insert') }}" class="btn btn-primary btn-block">Insert</a>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-12 mb-3">
+                                    <a href="{{ url_for('select') }}" class="btn btn-primary btn-block">View</a>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-12 mb-3">
+                                    <a href="{{ url_for('update') }}" class="btn btn-primary btn-block">Update</a>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-12 mb-3">
+                                    <a href="{{ url_for('delete') }}" class="btn btn-primary btn-block">Delete</a>                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="text-left">Tools</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row justify-content-center">
+                        <div class="col-md-12">
+                            <div class="row">
+                                <div class="col-sm-12 mb-3">
+                                    <a href="{{ url_for('reset') }}" class="btn btn-danger btn-block">Erase All Data</a>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-12 mb-3">
+                                    <a href="{{ url_for('createTable') }}" class="btn btn-success btn-block">Create Table</a>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-12 mb-3">
+                                    <a href="{{ url_for('automatic_insert_old_data') }}" class="btn btn-info btn-block">Scan for Old Data</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-
-<body>
-    <h3>
-        <a href="{{ url_for('reset') }}">ERASE ALL DATA</a>
-        <a href="{{ url_for('createTable') }}">Create Table!</a>
-    </h3>
-</body>
-
-
 {% endblock %}
