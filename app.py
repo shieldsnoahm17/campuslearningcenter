@@ -1,42 +1,65 @@
+# |--------------------------------------------------------------------------------------------|
+# |~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * |
+# |                                                                                            |
+# | Module Name: app.py - OFFLINE ONLY                                                         |
+# | Author: Noah Shields                                                                       |
+# | Date: 05/15/2023                                                                           |
+# |                                                                                            |
+# | Description: This is the driving program for this application. It includes all needed      |
+# |              classes, flask routes, helper methods, etc.                                   |
+# |              All methods will be described below, or in the README file                    |
+# |              This is the OFFLINE version only, a guide to make it online in the the README |
+# |                                                                                            |
+# | Dependencies: This uses a flask backend and utitizes bootstrap and jinja to display and    |
+# |               allow the user to guide through the flask routes                             |
+# |                                                                                            |
+# | Notes: If making modifications to this code read the README file as it explains each       |
+# |        data structure and algorithm in detail. The comments below are supplemental only    |
+# |                                                                                            |
+# |~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ *~|
+# |--------------------------------------------------------------------------------------------|
+
 from flask import Flask, render_template, request, redirect, url_for
 from flask_bootstrap import Bootstrap
 from flask_moment import Moment
 from flask_wtf import FlaskForm
 from wtforms import widgets, StringField, SubmitField, SelectField, Form, SelectMultipleField
 from wtforms.validators import DataRequired
-#from db import connection
-import json
 from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user
-import ast
-import docx
-import datetime
-import os
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
 from openpyxl.utils import get_column_letter
 from openpyxl.drawing.image import Image
-import random
+import ast, docx, datetime, os, json, random
+#from db import connection
+
 
 app = Flask(__name__)
 
+#this is the login manager. All routes decorated with @login_required,
+#are protected by this manager. A logout route is also optional, but not implemented
 login_manager = LoginManager()
 login_manager.init_app(app)
 
 app.config['SECRET_KEY'] = 'super_secret'
 bootstrap = Bootstrap(app)
 moment = Moment(app)
-#conn = connection(host = 'cmsc508.com', database = '22FA_team32', user = 'shieldsn', password = 'V01000930c')
+#This connection is used for the connection to a outside database
+#conn = connection(host = '', database = '', user = '', password = '', port = '')
 
-#dictionary of tutors
+#dictionary of tutors. The key is the name of the tutor, and the value is a Tutor object,
+#see the Tutor object below
 tutors = {}
 
 #dictionary to be used only for the word and excel sheets
+#it is similar to all_courses, but it includes the names as an additional layer. here is an example
 parsedData = {}
 
 #set of course codes
+#used as an organized way of parsed data, used whenever one needs to know something about a course, but not the tutors
 all_courses = {}
 
-
+#A tutor has a name, a set of courses they can tutor, and a set of times they work
 class Tutor:
     def __init__(self, name=None, courses=None, availabilities=None):
         self.name = name
@@ -48,6 +71,9 @@ class Tutor:
 # |~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ Classes ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ |
 # |~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * |
 # |~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * |
+# |--------------------------------------------------------------------------------------------|
+# |These are flask form classes, they are used to create the WTF forms that you see            |
+# |Sepcifically the interactive portions... The submit buttons, and the select/string fields   |
 # |--------------------------------------------------------------------------------------------|
 
 # ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ 
@@ -126,6 +152,8 @@ class UserForm(FlaskForm):
 # |~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * |
 # |~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * |
 # |--------------------------------------------------------------------------------------------|
+# |All the main flask routes, that are matched with some HTML page                             |
+# |--------------------------------------------------------------------------------------------|
 
 # ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ *
 # ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ Error Handling ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ *
@@ -169,22 +197,19 @@ def login():
         user = form.user.data
         password = form.password.data
         users = getUsers()
+
+        #check if the user exists and if the password matches, if so, log them in
         if user in users and users[user] == password:
             user = User(user)
             login_user(user)
 
-            insertOldData()  #insert all existing data from last session in oldData.txt
+            insertOldData()  #Extract all data from oldData.txt, and populate the data structutes
+                             #This allows for the user to pick up where they left off
 
             return redirect(url_for('selections'))
-        #cond = False
-        # if vid == "V12345678" and password == "password123": #this needs to be a part of the users table in the db, check that
-        #     return render_template('user.html')
-        # elif vid == "V00000000" and password == "password000":
-        #     return render_template('admin.html')
-        # else:
-        #     return render_template('login.html', form = form, vid = vid, password = password, cond = True)
     return render_template('login.html', form = form)
 
+#simply the selections of tools... insert, delete, view, update, create tables, reset, look for previous data
 @app.route('/selections', methods=['GET', 'POST'])
 @login_required
 def selections():
@@ -204,7 +229,7 @@ def delete_tutor():
     name = None
     form = DeleteTutorForm()
 
-    names = [(tutor[0], tutor[1].name) for tutor in tutors.items()] #choices of all names
+    names = sorted([(tutor[0], tutor[1].name) for tutor in tutors.items()]) #sorted choices of all names
 
     form.name.choices = names
 
@@ -230,7 +255,7 @@ def delete_course():
         for number in all_courses[subject]:
             tempCodes.add(f"{subject}{number}")
 
-    all_course_codes = [(code,code) for code in tempCodes]          #choices of all courses
+    all_course_codes = sorted([(code,code) for code in tempCodes])    #sorted choices of all courses
 
     form.course_codes.choices = all_course_codes
 
@@ -252,6 +277,7 @@ def delete_course():
 
     return render_template('delete_course.html', form = form)
 
+#Really should only be used with a database
 @app.route('/delete_user', methods=['GET', 'POST'])
 @login_required
 def delete_user():
@@ -270,11 +296,13 @@ def delete_user():
 # ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ 
 # ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ Update Pages ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ *
 # ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ 
+#options for updating, expertise and availabilities
 @app.route('/update', methods=['GET', 'POST'])
 @login_required
 def update():
     return render_template('update.html')
 
+#this is basically a copy of insert_expertise, but the expertise of the tutor is first reset
 @app.route('/update_expertise', methods=['GET', 'POST'])
 @login_required
 def update_expertise():
@@ -299,7 +327,7 @@ def update_expertise():
     if form.validate_on_submit():
         course_codes = form.course_codes.data
         name = form.name.data
-        tutors[name].courses = set()
+        tutors[name].courses = set()    #expertise of the tutor are reset
         for course in course_codes:
             tutors[name].courses.add(course)
 
@@ -313,6 +341,7 @@ def update_expertise():
     
     return render_template('update_expertise.html', form = form)
 
+#this is basically a copy of insert_availabilties, but the availabilties of the tutor is first reset
 @app.route('/update_availability', methods=['GET', 'POST'])
 @login_required
 def update_availability():
@@ -332,7 +361,7 @@ def update_availability():
         name = form.name.data
         days = form.days.data
         times = form.times.data
-        tutors[name].availabilities = set()
+        tutors[name].availabilities = set() #eavailabilities are reset
         for day in days:
             for time in times:
                 tutors[name].availabilities.add((day,time))
@@ -370,6 +399,7 @@ def select_by_tutor():
         #add to table
         data.append((name, courses, availabilities))        
 
+    #the select_table page is used for any type of table, this is used whenever a table is to be shown
     return render_template('select_table.html', headers = headers, data = data)
 
 @app.route('/select_by_course', methods=['GET', 'POST'])
@@ -402,6 +432,7 @@ def select_by_course():
 # ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ 
 # ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ Insert Pages ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ *
 # ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ 
+#shows options of things to insert... tutor, expertise, course, availabilties, user, old data
 @app.route('/insert', methods=['GET', 'POST'])
 @login_required
 def insert():
@@ -414,11 +445,11 @@ def insert_tutor():
     form = TutorForm()
 
     if form.validate_on_submit():
-        name = form.name.data.lower()
-        if name in tutors.keys():
+        name = form.name.data.lower()       #grab name and lowercase it
+        if name in tutors.keys():           #if tutor is already inserted, return with dup == 1, indicating the user that the tutor already exists
             return render_template('insert_tutor.html', form = form, dup = 1)
 
-        tutor = Tutor(name = name)
+        tutor = Tutor(name = name)  #otherwise make a new tutor
         tutors[name] = tutor
     return render_template('insert_tutor.html', form = form, dup = 0)
 
@@ -429,13 +460,13 @@ def insert_course():
     form = CourseForm()
 
     if form.validate_on_submit():
-        course_code = form.course_code.data.upper()
-        courseSubject = course_code[:4]
+        course_code = form.course_code.data.upper() #grab course name and uppercase it
+        courseSubject = course_code[:4]     #split into the subject and number
         courseNumber = course_code[4:]
-        if courseSubject not in all_courses:
+        if courseSubject not in all_courses:    #if its a new subject
             all_courses[courseSubject] = {}
 
-        if courseNumber not in all_courses[courseSubject]:
+        if courseNumber not in all_courses[courseSubject]: #if a new course in that subject
             all_courses[courseSubject][courseNumber] = set({})
 
     return render_template('insert_course.html', form = form)
@@ -450,11 +481,12 @@ def insert_expertise():
     tempCodes = set({})
     form = ExpertiseForm()
 
+    #grab all the courses
     for subject in all_courses.keys():
         for number in all_courses[subject]:
             tempCodes.add(f"{subject}{number}")
 
-
+    #add choices for courses and names
     names = sorted([(tutor[0], tutor[1].name) for tutor in tutors.items()])
     all_course_codes = sorted([(code,code) for code in tempCodes])
     
@@ -466,8 +498,9 @@ def insert_expertise():
         course_codes = form.course_codes.data
         name = form.name.data
         for course in course_codes:
-            tutors[name].courses.add(course)
+            tutors[name].courses.add(course)    #add list of courses to the tutor
 
+        #function used to update the all_courses data structure
         update_all_courses(name)
             
             
@@ -484,7 +517,7 @@ def insert_availability():
     days = None
     form = AvailabilityForm()
 
-    names = sorted([(tutor[0], tutor[1].name) for tutor in tutors.items()])
+    names = sorted([(tutor[0], tutor[1].name) for tutor in tutors.items()]) #list of all names
 
     form.name.choices = names
     form.days.choices = [('sunday', 'Sunday'), ('monday', 'Monday'), ('tuesday', 'Tuesday'), ('wednesday', 'Wednesday'), ('thursday', 'Thursday'), ('friday', 'Friday'), ('saturday', 'Saturday')]
@@ -495,14 +528,18 @@ def insert_availability():
         name = form.name.data
         days = form.days.data
         times = form.times.data
+
+        #add all day and time pairs into the tutors availabilities (monday, 9) is monday from 9am to 10am
         for day in days:
             for time in times:
-                tutors[name].availabilities.add((day,time))
+                tutors[name].availabilities.add((day,time)) 
 
+        #update all_courses data structure
         update_all_courses(name)
     
     return render_template('insert_availability.html', form = form)
 
+#should only be used if database is used
 @app.route('/insert_user', methods=['GET', 'POST'])
 @login_required
 def insert_user():
@@ -517,6 +554,8 @@ def insert_user():
 
     return render_template('insert_user.html', form = form)
 
+#There is a txt file in /deliverables that is similar to a CSV file. insertOldData takes in a string and parses it
+#This parsed data is then used to update all 3 data structures
 @app.route('/insert_oldData', methods=['GET', 'POST'])
 @login_required
 def insert_oldData():
@@ -543,6 +582,8 @@ def reset():
     global all_courses
     global parsedData
 
+    #backup the data, store in deletedData.txt, and reset all three data structures
+
     downloadExistingData("deletedData.txt")
     tutors = {}
     parsedData = {}
@@ -564,17 +605,17 @@ def getUsers():
 @app.route('/createTable')
 @login_required
 def createTable():
+    #update the parsedData data structure, download the oldData.txt file, downlaod the word and excel docs
+
     updateParsedData()
     downloadExistingData()
-    print(f"all_courses: {all_courses}")
-    print(f"tutors: {tutors}")
-    print(f"parsed data: {parsedData}")
     downloadDoc()
     downloadExcel()
     return redirect('/selections')
 
 @app.route('/automatic_insert_old_data')
 def automatic_insert_old_data():
+    #used when a user logs in so that the data is automatically loaded in
     insertOldData()
     downloadExistingData()
     return redirect("/selections")
@@ -593,24 +634,23 @@ def insertOldData(oldData = None):
     tutors = {}
     all_courses = {}
 
-    while(len(oldData) > 0):
-        name = oldData[:oldData.index(';')]
+
+    while(len(oldData) > 0):                                                #while there is still data to be parsed...
+        name = oldData[:oldData.index(';')]                                 #grab name (used to be identified with vnumber)
         oldData = oldData[ oldData.index(';') + 1:]
         
-        name = oldData[:oldData.index(';')]
+        name = oldData[:oldData.index(';')]                                 #grab name
         oldData = oldData[ oldData.index(';') + 1:]
 
-        courseIDs = ast.literal_eval(oldData[:oldData.index(';')])
+        courseIDs = ast.literal_eval(oldData[:oldData.index(';')])          #grab courses
         oldData = oldData[ oldData.index(';') + 1:]
 
-        availabilities = ast.literal_eval(oldData[:oldData.index(';')])
+        availabilities = ast.literal_eval(oldData[:oldData.index(';')])     #grab availabilities
         oldData = oldData[ oldData.index(';') + 1:]
 
-        tutors[name] = Tutor(name, courseIDs, availabilities)
+        tutors[name] = Tutor(name, courseIDs, availabilities)               #create tutor with the above credentials
 
-    update_all_courses()
-    for tutor in tutors.values():
-        print(f"NAME:{tutor.name}\nCOURSES:{tutor.courses}\nTIMES:{tutor.availabilities}")
+    update_all_courses()    #create the all_courses data structure
 
 def updateParsedData():
     global parsedData
@@ -631,6 +671,7 @@ def updateParsedData():
             parsedData[courseSubject][courseNumber].append((tutor.name, tutor.availabilities))
 
 def downloadExistingData(fileName = "oldData.txt"):
+    #simply creates the oldData string, and stores it into oldData.txt
     oldData = ""
     for tutor in tutors.items():
         oldData += f"{tutor[0]};{tutor[1].name};{tutor[1].courses};{tutor[1].availabilities};"
@@ -687,6 +728,7 @@ def downloadExcel():
 
     students = {"sunday":{}, "monday":{}, "tuesday":{}, "wednesday":{}, "thursday":{}, "friday":{}, "saturday":{}}
 
+    #A little hard to follow, but it splits each day of the week up, and grabs all the times of each course that matches with the 'day of the week'. then append the name, for the cell
     for dayOfTheWeek in students:
         for subject in parsedData:
             color = generate_random_color()
@@ -787,6 +829,7 @@ def downloadExcel():
     return "done"
 
 def combineDays(timesSet):
+    #takes combined days and times ((monday, 1),(tuesday, 2)) and makes them readable - (monday 1-2pm, tuesday 2-3pm)
     timesDict = {}
     result = ""
     for time in timesSet:
@@ -804,6 +847,8 @@ def combineDays(timesSet):
     return result
 
 def combineTimes(times):
+    #used to combine times into something readable
+    #so (1,2,3) turns into 1pm-4pm
     tempTimes = set({})   #all times represent the start time, so we also need to add the end times ... (1,2) should be (1,2,3)
     for time in times:    #we use the tempTimes because we cannot chnage the size of the set while interating through it
         time = int(time)
@@ -832,7 +877,7 @@ def convertToRegTime(military_time):
     return regular_time
 
 def generate_random_color():
-
+    #can be used if you want to randomly generate a color, isnt being used right now
     r = random.randint(0, 255)  # Random value for red component
     g = random.randint(0, 255)  # Random value for green component
     b = random.randint(0, 255)  # Random value for blue component
@@ -844,17 +889,19 @@ def generate_random_color():
     return color_hex
 
 def day_to_num(day):
+    #defines the order of the days in the week. Returns where each day is in respect to its position of the week 
     days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]
     return days.index(day.lower())
 
 def sort_availabilities(availabilities):
     #sort by day then by time using the day_to_num method
-    print(f"AVAILABILITES YIPPY: {availabilities}")
     availabilities = sorted(availabilities, key=lambda x: (day_to_num(x[0]), x[1]))
     #join together to make a string
     return availabilities
 
 def sort_courses(courses):
+    #similar to sorting based on day of the week, this sorts based on this specified order of classes
+    #this way, things of the same colors are put next to eachother, if a subject isnt in this list, it is put at the bottom
 
     course_order = ["CHEM", "MATH", "STAT", "BIOL", "PHYS", "HPEX", "CMSC", "EGRB", "CLSE", "EGMN",
                         "EGRE", "PHYS", "SPAN", "FREN", "GRMN", "ITAL", "ACCT", "ECON", "FIRE", "SCMA",
@@ -862,7 +909,6 @@ def sort_courses(courses):
 
     max_index = len(course_order) - 1
     return sorted(courses, key=lambda x: course_order.index(x[:4]) if x[:4] in course_order else max_index+1)
-
 
 #when a person adds a new availability or a new course, this must be run so that all_courses can be updated. 
 #for example if Ted works BIOL101 and works on sunday 1-2, then he decides he wants to work BIOL102 as well, 
