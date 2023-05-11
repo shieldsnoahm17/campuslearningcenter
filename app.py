@@ -30,6 +30,7 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill
 from openpyxl.utils import get_column_letter
 from openpyxl.drawing.image import Image
+import datetime as dt
 import ast, docx, datetime, os, json, random
 #from db import connection
 
@@ -52,11 +53,11 @@ moment = Moment(app)
 tutors = {}
 
 #dictionary to be used only for the word and excel sheets
-#it is similar to all_courses, but it includes the names as an additional layer. here is an example
+#it is similar to all_courses, but it includes the names as an additional layer. Please see the README for an example
 parsedData = {}
 
 #set of course codes
-#used as an organized way of parsed data, used whenever one needs to know something about a course, but not the tutors
+#used as an organized way of parsed data, used whenever one needs to know something about a course, but not the tutors. pelase see the README for an example
 all_courses = {}
 
 #A tutor has a name, a set of courses they can tutor, and a set of times they work
@@ -468,8 +469,10 @@ def insert_course():
 
         if courseNumber not in all_courses[courseSubject]: #if a new course in that subject
             all_courses[courseSubject][courseNumber] = set({})
+        else:
+            return render_template('insert_course.html', form = form, dup = 1)
 
-    return render_template('insert_course.html', form = form)
+    return render_template('insert_course.html', form = form, dup = 0)
 
 @app.route('/insert_expertise', methods=['GET', 'POST'])
 @login_required
@@ -552,7 +555,7 @@ def insert_user():
     #     password = form.password.data
     #     conn.insert({"table":"user","data":{"user":user,"password":password}})
 
-    return render_template('insert_user.html', form = form)
+    return render_template('insert_user.html')
 
 #There is a txt file in /deliverables that is similar to a CSV file. insertOldData takes in a string and parses it
 #This parsed data is then used to update all 3 data structures
@@ -741,7 +744,9 @@ def downloadExcel():
                         day = dayTime[0]
                         time = dayTime[1]
                         if day == dayOfTheWeek:
-                            time_range = f"{time} - {int(time) + 1}" 
+                            print(f"TIME:  {convertToRegTime(time)}")
+                            print(f"TIME:  {convertToRegTime(int(time) + 1)}")
+                            time_range = f"{convertToRegTime(time)} - {convertToRegTime(int(time) + 1)}" 
                             if time_range in students[dayOfTheWeek][className]:
                                 students[dayOfTheWeek][className][time_range].append(name)
                             else:
@@ -766,10 +771,10 @@ def downloadExcel():
         for class_data in classes.values():
             times.extend(class_data.keys())
 
-        times = list(set(times))  # Remove duplicates and sort the times
+        times = list(set(times))  # Remove duplicates
 
         # Sort the times in ascending order
-        times = sorted(times, key=lambda x: int(x.split('-')[0]))
+        times = sort_time_ranges(times)
 
         # Set column headers with times
         headers = ['']
@@ -825,13 +830,11 @@ def downloadExcel():
     # Save the workbook
     workbook.save('deliverables/schedule.xlsx')
 
-
-    return "done"
-
 def combineDays(timesSet):
     #takes combined days and times ((monday, 1),(tuesday, 2)) and makes them readable - (monday 1-2pm, tuesday 2-3pm)
     timesDict = {}
     result = ""
+    timesSet = sort_availabilities(timesSet)
     for time in timesSet:
         day = time[0]
         hour = time[1]
@@ -873,7 +876,7 @@ def combineTimes(times):
 #converts single digit miliraty time to regular 12 hour time
 def convertToRegTime(military_time):
     dt_obj = datetime.datetime.strptime(str(military_time), "%H")
-    regular_time = dt_obj.strftime("%I:%M %p").lstrip('0')
+    regular_time = dt_obj.strftime("%I:%M%p").lstrip('0')
     return regular_time
 
 def generate_random_color():
@@ -948,4 +951,19 @@ def update_all_courses(name = "all_tutors"):
             else:
                 all_courses[subject][number] = all_courses[subject][number] | tutor_availabilities
 
-        
+def sort_time_ranges(time_ranges):
+    print(f"TIME RANGES: {time_ranges}")
+    def to_24h(time_str):
+        return dt.datetime.strptime(time_str, '%I:%M%p').strftime('%H:%M')
+
+    def to_tuple(time_range_str):
+        start, end = map(to_24h, time_range_str.split(' - '))
+        if start > end:
+            end = str(int(end[:2]) + 24) + end[2:]
+        return (start, end)
+
+    time_tuples = [to_tuple(tr) for tr in time_ranges]
+    sorted_tuples = sorted(time_tuples, key=lambda t: t[0])
+    time_ranges = [f"{dt.datetime.strptime(t[0], '%H:%M').strftime('%I:%M%p').lstrip('0')} - {dt.datetime.strptime(t[1], '%H:%M').strftime('%I:%M%p').lstrip('0')}" for t in sorted_tuples]
+    print(f"TIME RANGES: {time_ranges}")
+    return time_ranges

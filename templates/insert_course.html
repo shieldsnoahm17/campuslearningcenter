@@ -8,7 +8,11 @@
     <h2>
         Add New Course
     </h2>
-
+    {% if dup == 1 %}
+        <div class="alert alert-danger">
+            Course already exists in the system.
+        </div>
+    {% endif %}
 </div>
 {{ wtf.quick_form(form) }}
 <h1>

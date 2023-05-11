@@ -1,3 +1,18 @@
+# |--------------------------------------------------------------------------------------------|
+# |~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * |
+# |                                                                                            |
+# | Module Name: db.py                                                                         |
+# | Author: Noah Shields                                                                       |
+# | Date: 05/15/2023                                                                           |
+# |                                                                                            |
+# | Description: This is a subclass of the mySQLConnection class that allows for simple MySQL  |
+# |              inserts, deletes, updates, selects, and custom queries                        |
+# |                                                                                            |
+# | Dependencies: mysql.connector for python, can be downloaded with pip                       |
+# |                                                                                            |
+# |~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ *~|
+# |--------------------------------------------------------------------------------------------|
+
 from mysql.connector import MySQLConnection
 
 class connection(MySQLConnection):
