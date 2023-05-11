@@ -17,7 +17,7 @@ login_manager.init_app(app)
 app.config['SECRET_KEY'] = 'super_secret'
 bootstrap = Bootstrap(app)
 moment = Moment(app)
-conn = connection(host = 'cmsc508.com', database = '22FA_team32', user = 'shieldsn', password = 'V01000930')
+conn = connection(host = '', database = '', user = '', password = '')
 
 
 
