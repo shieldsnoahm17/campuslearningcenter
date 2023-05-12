@@ -195,13 +195,13 @@ In this section, we will talk about the major working component in each file and
 
 ## Migrate Online?
 
-If there is a want or need to put this on a server with no database, utilizing the same 3 data structures:
+- If there is a want or need to put this on a server with no database, utilizing the same 3 data structures:
     - The deliverables would need to downloaded on the local machine rather than the server it is residing on
         - a copy of oldData.txt should still stay there, but the schedules do not need to be stored there
     - A system to add and delete users should be created
     - logout() should be created
 
-If a database were to be used to store the data instead
+- If a database were to be used to store the data instead
     - The deliverables would need to downloaded on the local machine rather than the server it is residing on
         - a copy of oldData.txt should still stay there, but the schedules do not need to be stored there
     - all places where a data structure is pulled from or edited would need to utilize db.py instead.
