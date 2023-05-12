@@ -86,7 +86,7 @@ You are now prompted with many selections:
         - "user" deletes a user from accessing the app (not built for the offline version)
 
 
-##How it works
+## How it works
 
 In this section, we will talk about the major working component in each file and directory in the repository
 
@@ -193,7 +193,7 @@ In this section, we will talk about the major working component in each file and
             and it sorts them to ("9am - 10am", "1pm - 2pm", "3pm - 4pm")
 
 
-##Migrate Online?
+## Migrate Online?
 
 If there is a want or need to put this on a server with no database, utilizing the same 3 data structures:
     - The deliverables would need to downloaded on the local machine rather than the server it is residing on
@@ -209,7 +209,7 @@ If a database were to be used to store the data instead
         - most of this work is already done in the "database" branch
     - logout() should be created
 
-##Contact
+## Contact
 If there are **any** questions, please email the creator of this application, Noah Shields at:
 **shieldsnoahm@gmail.com**
 
