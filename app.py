@@ -850,8 +850,6 @@ def combineDays(timesSet):
     return result
 
 def combineTimes(times):
-    #used to combine times into something readable
-    #so (1,2,3) turns into 1pm-4pm
     tempTimes = set({})   #all times represent the start time, so we also need to add the end times ... (1,2) should be (1,2,3)
     for time in times:    #we use the tempTimes because we cannot chnage the size of the set while interating through it
         time = int(time)
@@ -873,7 +871,6 @@ def combineTimes(times):
     ranges.append((start_time, end_time)) 
     return ',\n\t  '.join(f'{r[0]}-{r[1]}' if r[0] != r[1] else str(r[0]) for r in ranges)
 
-#converts single digit miliraty time to regular 12 hour time
 def convertToRegTime(military_time):
     dt_obj = datetime.datetime.strptime(str(military_time), "%H")
     regular_time = dt_obj.strftime("%I:%M%p").lstrip('0')
@@ -913,14 +910,10 @@ def sort_courses(courses):
     max_index = len(course_order) - 1
     return sorted(courses, key=lambda x: course_order.index(x[:4]) if x[:4] in course_order else max_index+1)
 
-#when a person adds a new availability or a new course, this must be run so that all_courses can be updated. 
-#for example if Ted works BIOL101 and works on sunday 1-2, then he decides he wants to work BIOL102 as well, 
-#then we must add 1-2 for BIOL102 in all_courses
-#if no name is passed, we create a new all_tutors from the tutors list, mainly used when deleting a tutor
 def update_all_courses(name = "all_tutors"):
     global all_courses
     if name == "all_tutors":                        #if we want to completely refresh all_courses
-        all_courses = {}                            #reset all_coursees
+        all_courses = {}                            #reset all_courses
         for tutor in tutors.values():                     #for every tutor....
             tutor_availabilities = tutor.availabilities   #set tutor_availabilites
             tutor_courses = tutor.courses       #set tutor_courses
@@ -952,7 +945,6 @@ def update_all_courses(name = "all_tutors"):
                 all_courses[subject][number] = all_courses[subject][number] | tutor_availabilities
 
 def sort_time_ranges(time_ranges):
-    print(f"TIME RANGES: {time_ranges}")
     def to_24h(time_str):
         return dt.datetime.strptime(time_str, '%I:%M%p').strftime('%H:%M')
 
